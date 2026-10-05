@@ -1,4 +1,4 @@
 {
-  "raw_dir": "/path",
-  "data_dir": "/path"
+  "sources_dir": "/path",
+  "outputs_dir": "/path"
 }

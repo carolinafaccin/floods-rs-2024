@@ -4,7 +4,7 @@
     python pipeline.py --only tables         # tables and comparison with the paper
     python pipeline.py --only figures docs   # redraw figures and copy the README ones
 
-Inputs come from raw_dir and outputs go to data_dir, both set in config/config.local.json.
+Inputs come from sources_dir and outputs go to outputs_dir, both set in config/config.local.json.
 """
 import argparse
 import shutil
@@ -18,8 +18,8 @@ from floods import config, data, figures, metrics, style  # noqa: E402
 README_FIGURES = ["map_region", "flooded_by_municipality", "share_flooded"] + [f"map_{t[0]}" for t in figures.TOWNS]
 
 
-def run_tables(t, data_dir):
-    out = data_dir / "tables"
+def run_tables(t, outputs_dir):
+    out = outputs_dir / "tables"
     t.round(2).to_csv(out / "flooded_by_municipality.csv", index=False)
     v = metrics.by_valley(t)
     v.round(2).to_csv(out / "flooded_by_valley.csv", index=False)
@@ -34,9 +34,9 @@ def run_tables(t, data_dir):
     return cmp["ok"].all()
 
 
-def run_figures(b, t, mun, pdir, data_dir):
+def run_figures(b, t, mun, pdir, outputs_dir):
     style.setup()
-    f = data_dir / "figures"
+    f = outputs_dir / "figures"
     flood = data.load_flood(pdir)
     rivers = data.load_rivers(pdir)
     roads = data.load_roads(pdir)
@@ -51,11 +51,11 @@ def run_figures(b, t, mun, pdir, data_dir):
     print(f"figures written to {f}")
 
 
-def run_docs(data_dir):
+def run_docs(outputs_dir):
     dest = Path(__file__).parent / "docs" / "img"
     dest.mkdir(parents=True, exist_ok=True)
     for name in README_FIGURES:
-        shutil.copy(data_dir / "figures" / f"{name}.png", dest / f"{name}.png")
+        shutil.copy(outputs_dir / "figures" / f"{name}.png", dest / f"{name}.png")
     print(f"copied {len(README_FIGURES)} figures to {dest}")
 
 
@@ -65,20 +65,20 @@ def main():
     args = p.parse_args()
     steps = args.only or ["tables", "figures", "docs"]
 
-    raw_dir, data_dir = config.load()
-    pdir = config.project_dir(raw_dir)
+    sources_dir, outputs_dir = config.load()
+    pdir = config.project_dir(sources_dir)
     flood = data.load_flood(pdir)
-    mun = data.load_municipalities(pdir, raw_dir)
-    b = data.load_buildings(raw_dir, pdir, flood, data_dir / "cache" / "buildings.parquet")
+    mun = data.load_municipalities(pdir, sources_dir)
+    b = data.load_buildings(sources_dir, pdir, flood, outputs_dir / "cache" / "buildings.parquet")
     t = metrics.by_municipality(b, mun)
     print(f"{len(b):,} buildings, {int(b['flooded'].sum()):,} inside the flood extent; {len(mun)} municipalities in the two valleys")
     ok = True
     if "tables" in steps:
-        ok = run_tables(t, data_dir)
+        ok = run_tables(t, outputs_dir)
     if "figures" in steps:
-        run_figures(b, t, mun, pdir, data_dir)
+        run_figures(b, t, mun, pdir, outputs_dir)
     if "docs" in steps:
-        run_docs(data_dir)
+        run_docs(outputs_dir)
     if not ok:
         sys.exit("validation failed: computed values differ from the published ones (see tables/comparison_with_paper.csv)")
 

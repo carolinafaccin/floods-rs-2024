@@ -13,27 +13,27 @@ def load_flood(pdir):
     return f[["geometry"]]
 
 
-def load_municipalities(pdir, raw_dir):
+def load_municipalities(pdir, sources_dir):
     """Municipalities of the Rio Pardo and Taquari valleys (COREDE regions), with their valley."""
     m = gpd.read_file(pdir / MUNICIPALITIES).to_crs(CRS)
     m = m.rename(columns={"CD_MUN": "cd_mun", "NM_MUN": "municipality"})
-    coredes = pd.read_excel(raw_dir / COREDES, dtype={"geocod": str})
+    coredes = pd.read_excel(sources_dir / COREDES, dtype={"geocod": str})
     m = m.merge(coredes[["geocod", "corede"]], left_on="cd_mun", right_on="geocod", how="left")
     m = m[m["corede"].isin(VALLEYS)].rename(columns={"corede": "valley"})
     return m[["cd_mun", "municipality", "valley", "geometry"]].reset_index(drop=True)
 
 
-def load_buildings(raw_dir, pdir, flood, cache):
+def load_buildings(sources_dir, pdir, flood, cache):
     """Open Buildings footprints with municipality, census tract (2010), urban/rural and a `flooded` flag.
 
     A building counts as flooded when its footprint touches the flood extent, as in the 2024 analysis
     (`flooded_centroid` keeps the stricter test: centroid inside the extent). It takes the
     urban/rural situation of the 2010 census tract that contains its centroid. The source shapefile
-    is large, so the result is cached as GeoParquet in data_dir/cache.
+    is large, so the result is cached as GeoParquet in outputs_dir/cache.
     """
     if cache.exists():
         return gpd.read_parquet(cache)
-    b = gpd.read_file(raw_dir / BUILDINGS, columns=["area_in_me", "confidence"]).to_crs(CRS)
+    b = gpd.read_file(sources_dir / BUILDINGS, columns=["area_in_me", "confidence"]).to_crs(CRS)
     b = b.rename(columns={"area_in_me": "area_m2"})
     c = b.geometry.centroid
     b["x"], b["y"] = c.x, c.y

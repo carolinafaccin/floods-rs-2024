@@ -58,22 +58,22 @@ flowchart LR
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp config/config.local.json.example config/config.local.json   # set raw_dir and data_dir
+cp config/config.local.json.example config/config.local.json   # set sources_dir and outputs_dir
 python pipeline.py                               # tables + figures + README images
 python pipeline.py --only figures docs           # redraw figures only
 pytest                                           # unit tests + validation against the paper
 ```
 
-The first run reads the 512k footprints (a few minutes) and caches them in `data_dir/cache/buildings.parquet`.
+The first run reads the 512k footprints (a few minutes) and caches them in `outputs_dir/cache/buildings.parquet`.
 
 `config/config.local.json` (gitignored) sets two folders:
 
 | Key | Purpose |
 |---|---|
-| `raw_dir` | Shared raw-data catalog. Reads the 2024 GIS project from `_projetos/rio_pardo_enchentes_2024/shp/` (flood extent, census tracts, rivers, highways), the footprints from `google/open_buildings/vales_rs_2024/t1/` and the COREDE list from `spgg_rs/coredes/t1/` |
-| `data_dir` | This project's outputs: `tables/`, `figures/`, `cache/` |
+| `sources_dir` | Shared raw-data catalog. Reads the 2024 GIS project from `_projetos/rio_pardo_enchentes_2024/shp/` (flood extent, census tracts, rivers, highways), the footprints from `google/open_buildings/vales_rs_2024/t1/` and the COREDE list from `spgg_rs/coredes/t1/` |
+| `outputs_dir` | This project's outputs: `tables/`, `figures/`, `cache/` |
 
-## Outputs (`data_dir`)
+## Outputs (`outputs_dir`)
 
 | File | Content |
 |---|---|
